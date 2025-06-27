@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/cmd/main_test.go" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/internal/repo/permission_repo/permission_db.go" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/sql/20250622133100_init.sql" dialect="PostgreSQL" />
+  </component>
+</project>

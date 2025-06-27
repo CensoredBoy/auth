@@ -1,0 +1,25 @@
+jwt:
+  access_secret: "your-access-secret-key-32-chars"
+  refresh_secret: "your-refresh-secret-key-32-chars"
+  access_expiry: 15m
+  refresh_expiry: 168h # 7 days
+
+database:
+  host: "localhost"
+  port: "5432"
+  user: "jkoimni"
+  password: "qwerty"
+  db_name: "auth_db"
+
+server:
+  http_port: "8080"
+  grpc_port: "50051"
+
+redis:
+  addr: "127.0.0.1"
+  password: "toor"
+  user: "root"
+  db: 0
+  max_retries: 10
+  dial_timeout: "10s"
+  timeout: "5s"
