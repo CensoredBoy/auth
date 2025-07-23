@@ -9,11 +9,20 @@ import "google/protobuf/timestamp.proto";
 service AuthService {
   rpc Login (LoginRequest) returns (LoginResponse);
 
-  rpc Logout (LoginRequest) returns ();
+  rpc Logout (LoginResponse) returns (LogoutResponse);
 
   rpc Refresh (RefreshRequest) returns (LoginResponse);
 
   rpc CheckPermission (PermissionRequest) returns (PermissionResponse);
+
+  rpc LoginKeycloak (LoginRequest) returns (LoginResponse);
+
+  rpc LogoutKeycloak (LoginResponse) returns (LogoutResponse);
+
+  rpc RefreshKeycloak (RefreshRequest) returns (LoginResponse);
+
+  rpc CheckPermissionKeycloak (PermissionRequest) returns (PermissionResponse);
+
 }
 
 message LoginRequest {
@@ -40,4 +49,8 @@ message PermissionRequest {
 message PermissionResponse {
   bool read = 1;
   bool write = 2;
+}
+
+message LogoutResponse {
+  bool ok = 1;
 }
