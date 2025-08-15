@@ -8,16 +8,17 @@ import (
 	"auth/internal/repo/tokens_repo"
 	"auth/internal/repo/users_repo"
 	pb "auth/internal/web"
-	"context"
-	"fmt"
+	l "auth/pkg/log"
+	interceptors "auth/pkg/server"
 	"github.com/go-redis/redis/v8"
-	"github.com/jackc/pgx/v5"
 	"google.golang.org/grpc"
 	"log"
 	"net"
 )
 
 func main() {
+	cefLogger := l.NewCEFLogger("auth-service")
+
 	cfg := config.Load()
 	r := redis.NewClient(&redis.Options{
 		Addr:         cfg.Redis.Addr,
@@ -29,35 +30,31 @@ func main() {
 		ReadTimeout:  cfg.Redis.Timeout,
 		WriteTimeout: cfg.Redis.Timeout,
 	})
-	users := make(map[string]users_repo.User)
-	users["admin"] = users_repo.User{
-		Password: "admin",
-		ID:       1,
-	}
-	users["test"] = users_repo.User{
-		Password: "jopa",
-		ID:       2,
-	}
 	h := hasher.NewBCryptHasher(1)
-	usersRepo := users_repo.NewInMemoryUsersRepository(users)
-	psqlInfo := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		cfg.Database.User, cfg.Database.Password, cfg.Database.Host, cfg.Database.Port, cfg.Database.DBName)
-	conn, err := pgx.Connect(context.Background(), psqlInfo)
-	defer conn.Close(context.Background())
+	conn, err := grpc.Dial(cfg.DataProcessor.Address+":"+cfg.DataProcessor.Port, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+
+	// Создаем репозитории
+	usersRepo := users_repo.NewGrpcUserRepository(conn)
+	permRepo := permission_repo.NewGrpcPermissionRepository(conn)
 	tokenRepo := tokens_repo.NewTokensRedisRepo(r)
 	jwtService := jwt_service.NewJWTAuthService([]byte(cfg.JWT.AccessSecret), []byte(cfg.JWT.RefreshSecret), tokenRepo, usersRepo, h)
-	permRepo := permission_repo.NewPermissionRepository(conn)
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", ":"+cfg.Server.GRPCPort)
 	if err != nil {
-		log.Fatalf("ЕБАНУЛОСЬ: %v", err)
+		log.Fatalf("Crashed: %v", err)
 	}
 	authService := pb.NewAuthServer(usersRepo, permRepo, jwtService, h)
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptors.CEFLoggingInterceptor(cefLogger)),
+	)
 	pb.RegisterAuthServiceServer(grpcServer, authService)
 
-	log.Println("Сервер запущен на :50051")
+	log.Println("Server started at :" + cfg.Server.GRPCPort)
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("СЕРВЕР ЕБНУЛСЯ: %v", err)
+		log.Fatalf("Server crashed: %v", err)
 	}
 
 }

@@ -16,7 +16,13 @@ type UserAccessRequest struct {
 	OrganizationID *common.OrgID
 }
 
-func CheckPermissionHandler(ctx context.Context, req common.UserAccessRequest, token common.Token, perm_repo permission_repo.IPermissionRepository, auth jwt_service.ITokenService) (common.Permission, error) {
+func CheckPermissionHandler(
+	ctx context.Context,
+	req common.UserAccessRequest,
+	token common.Token,
+	permRepo permission_repo.IPermissionRepository,
+	auth jwt_service.ITokenService,
+) (common.Permission, error) {
 	userID, err := auth.ValidateAccessToken(token)
 	if err != nil {
 		return common.Permission{}, err
@@ -26,13 +32,17 @@ func CheckPermissionHandler(ctx context.Context, req common.UserAccessRequest, t
 		TeamID:         req.TeamID,
 		OrganizationID: req.OrganizationID,
 	}
-	return CheckPermission(ctx, request, perm_repo)
+	return CheckPermission(ctx, request, permRepo)
 }
 
-func CheckPermission(ctx context.Context, req UserAccessRequest, perm_repo permission_repo.IPermissionRepository) (common.Permission, error) {
+func CheckPermission(
+	ctx context.Context,
+	req UserAccessRequest,
+	permRepo permission_repo.IPermissionRepository,
+) (common.Permission, error) {
 	var perm common.Permission
 	if req.OrganizationID != nil {
-		perms, err := perm_repo.GetOrganizationPermissions(ctx, req.UserID, *req.OrganizationID)
+		perms, err := permRepo.GetOrganizationPermissions(ctx, req.UserID, *req.OrganizationID)
 		if err != nil {
 			if !errors.Is(err, pgx.ErrNoRows) {
 				return common.Permission{}, fmt.Errorf("failed to get org permissions: %w", err)
@@ -42,7 +52,7 @@ func CheckPermission(ctx context.Context, req UserAccessRequest, perm_repo permi
 
 	}
 	if req.TeamID != nil {
-		perms, err := perm_repo.GetTeamPermissions(ctx, req.UserID, *req.TeamID)
+		perms, err := permRepo.GetTeamPermissions(ctx, req.UserID, *req.TeamID)
 		if err != nil {
 			if !errors.Is(err, pgx.ErrNoRows) {
 				return common.Permission{}, fmt.Errorf("failed to get team permissions: %w", err)

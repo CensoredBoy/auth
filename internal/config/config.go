@@ -34,6 +34,16 @@ type Config struct {
 		HTTPPort string `mapstructure:"http_port"`
 		GRPCPort string `mapstructure:"grpc_port"`
 	}
+	Keycloak struct {
+		Url          string   `mapstructure:"url"`
+		ClientID     string   `mapstructure:"client_id"`
+		ClientSecret string   `mapstructure:"client_secret"`
+		Scopes       []string `mapstructure:"scopes"`
+	}
+	DataProcessor struct {
+		Address string `mapstructure:"address"`
+		Port    string `mapstructure:"port"`
+	}
 }
 
 func Load() *Config {

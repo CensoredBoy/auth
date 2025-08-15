@@ -20,7 +20,7 @@ type KeycloakTokenService struct {
 	userRepo users_repo.IUserRepository
 }
 
-func NewKeycloakTokenService(url, clientID, clientSecret string, scopes []string) *KeycloakTokenService {
+func NewKeycloakTokenService(url, clientID, clientSecret string, scopes []string, userRepo users_repo.IUserRepository) *KeycloakTokenService {
 	ctx := context.Background()
 	provider, err := oidc.NewProvider(ctx, url)
 	if err != nil {
@@ -39,6 +39,7 @@ func NewKeycloakTokenService(url, clientID, clientSecret string, scopes []string
 		provider: provider,
 		config:   oauth2Config,
 		verifier: verifier,
+		userRepo: userRepo,
 	}
 }
 func (k KeycloakTokenService) GenerateTokens(user *common.User) (*common.TokenPair, error) {

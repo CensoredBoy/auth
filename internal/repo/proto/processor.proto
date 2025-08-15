@@ -1,0 +1,622 @@
+syntax = "proto3";
+
+package data_processor;
+
+option go_package = ".;data_processor";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// Common messages
+message User {
+  int32 id = 1;
+  string name = 2;
+}
+
+message Organization {
+  int32 id = 1;
+  string project_name = 2;
+  int32 owner_id = 3;
+}
+
+message Team {
+  int32 id = 1;
+  string team_name = 2;
+  int32 owner_id = 3;
+  optional string folder = 4;
+  int32 organization_id = 5;
+}
+
+message Application {
+  int32 id = 1;
+  string name = 2;
+  optional string description = 3;
+  int32 team_id = 4;
+}
+
+message Version {
+  int32 id = 1;
+  int32 application_id = 2;
+  string version = 3;
+}
+
+message Scan {
+  int32 id = 1;
+  google.protobuf.Timestamp scan_date = 2;
+  int32 version_id = 3;
+}
+
+message ScanInfo {
+  int32 id = 1;
+  int32 scan_id = 2;
+}
+
+
+
+message Permission {
+  int32 id = 1;
+  string name = 2;
+  optional string description = 3;
+  bool read = 4;
+  bool write = 5;
+  oneof scope {
+    int32 organization_id = 6;
+    int32 team_id = 7;
+  }
+}
+
+message Role {
+  int32 id = 1;
+  string name = 2;
+  optional string description = 3;
+  optional bool is_active = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  int32 owner_id = 7;
+}
+
+message RoleWithPermissions {
+  Role role = 1;
+  repeated Permission permissions = 2;
+}
+
+// User Service
+service UserService {
+  rpc GetUserID (GetUserIDRequest) returns (GetUserIDResponse);
+  rpc CreateUser (CreateUserRequest) returns (User);
+  rpc GetUser (GetUserRequest) returns (User);
+  rpc GetUserByName (GetUserByNameRequest) returns (User);
+  rpc UpdateUser (UpdateUserRequest) returns (User);
+  rpc DeleteUser (DeleteUserRequest) returns (google.protobuf.Empty);
+  rpc ListUsers (ListUsersRequest) returns (ListUsersResponse);
+}
+
+message GetUserIDRequest {
+  User user = 1;
+}
+
+message GetUserIDResponse {
+  int32 user_id = 1;
+}
+
+message CreateUserRequest {
+  string name = 1;
+  string password = 2;
+}
+
+message GetUserRequest {
+  int32 id = 1;
+}
+
+message GetUserByNameRequest {
+  string name = 1;
+}
+
+message UpdateUserRequest {
+  int32 id = 1;
+  optional string name = 2;
+  optional string password = 3;
+}
+
+message DeleteUserRequest {
+  int32 id = 1;
+}
+
+message ListUsersRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+}
+
+// Organization Service
+service OrganizationService {
+  rpc CreateOrganization (CreateOrganizationRequest) returns (Organization);
+  rpc GetOrganization (GetOrganizationRequest) returns (Organization);
+  rpc GetOrganizationByName (GetOrganizationByNameRequest) returns (Organization);
+  rpc UpdateOrganization (UpdateOrganizationRequest) returns (Organization);
+  rpc DeleteOrganization (DeleteOrganizationRequest) returns (google.protobuf.Empty);
+  rpc ListOrganizations (ListOrganizationsRequest) returns (ListOrganizationsResponse);
+  rpc ListOrganizationsByOwner (ListByOwnerRequest) returns (ListOrganizationsResponse);
+}
+
+message CreateOrganizationRequest {
+  string project_name = 1;
+  int32 owner_id = 2;
+}
+
+message GetOrganizationRequest {
+  int32 id = 1;
+}
+
+message GetOrganizationByNameRequest {
+  string name = 1;
+}
+
+message UpdateOrganizationRequest {
+  int32 id = 1;
+  optional string project_name = 2;
+  optional int32 owner_id = 3;
+}
+
+message DeleteOrganizationRequest {
+  int32 id = 1;
+}
+
+message ListOrganizationsRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message ListByOwnerRequest {
+  int32 owner_id = 1;
+}
+
+message ListOrganizationsResponse {
+  repeated Organization organizations = 1;
+}
+
+// Team Service
+service TeamService {
+  rpc CreateTeam (CreateTeamRequest) returns (Team);
+  rpc GetTeam (GetTeamRequest) returns (Team);
+  rpc GetTeamByName (GetTeamByNameRequest) returns (Team);
+  rpc UpdateTeam (UpdateTeamRequest) returns (Team);
+  rpc DeleteTeam (DeleteTeamRequest) returns (google.protobuf.Empty);
+  rpc ListTeams (ListTeamsRequest) returns (ListTeamsResponse);
+  rpc ListTeamsByOrganization (ListByParentRequest) returns (ListTeamsResponse);
+  rpc ListTeamsByOwner (ListByOwnerRequest) returns (ListTeamsResponse);
+}
+
+message CreateTeamRequest {
+  string team_name = 1;
+  int32 owner_id = 2;
+  optional string folder = 3;
+  int32 organization_id = 4;
+}
+
+message GetTeamRequest {
+  int32 id = 1;
+}
+
+message GetTeamByNameRequest {
+  string name = 1;
+}
+
+message UpdateTeamRequest {
+  int32 id = 1;
+  optional string team_name = 2;
+  optional int32 owner_id = 3;
+  optional string folder = 4;
+  optional int32 organization_id = 5;
+}
+
+message DeleteTeamRequest {
+  int32 id = 1;
+}
+
+message ListTeamsRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message ListByParentRequest {
+  int32 parent_id = 1;
+}
+
+message ListTeamsResponse {
+  repeated Team teams = 1;
+}
+
+// Application Service
+service ApplicationService {
+  rpc CreateApplication (CreateApplicationRequest) returns (Application);
+  rpc GetApplication (GetApplicationRequest) returns (Application);
+  rpc GetApplicationByName (GetApplicationByNameRequest) returns (Application);
+  rpc UpdateApplication (UpdateApplicationRequest) returns (Application);
+  rpc DeleteApplication (DeleteApplicationRequest) returns (google.protobuf.Empty);
+  rpc ListApplications (ListApplicationsRequest) returns (ListApplicationsResponse);
+  rpc ListApplicationsByTeam (ListByParentRequest) returns (ListApplicationsResponse);
+}
+
+message CreateApplicationRequest {
+  string name = 1;
+  optional string description = 2;
+  int32 team_id = 3;
+}
+
+message GetApplicationRequest {
+  int32 id = 1;
+}
+
+message GetApplicationByNameRequest {
+  string name = 1;
+}
+
+message UpdateApplicationRequest {
+  int32 id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional int32 team_id = 4;
+}
+
+message DeleteApplicationRequest {
+  int32 id = 1;
+}
+
+message ListApplicationsRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message ListApplicationsResponse {
+  repeated Application applications = 1;
+}
+
+// Version Service
+service VersionService {
+  rpc CreateVersion (CreateVersionRequest) returns (Version);
+  rpc GetVersion (GetVersionRequest) returns (Version);
+  rpc GetVersionByNumber (GetVersionByNumberRequest) returns (Version);
+  rpc UpdateVersion (UpdateVersionRequest) returns (Version);
+  rpc DeleteVersion (DeleteVersionRequest) returns (google.protobuf.Empty);
+  rpc ListVersions (ListVersionsRequest) returns (ListVersionsResponse);
+}
+
+message CreateVersionRequest {
+  int32 application_id = 1;
+  string version = 2;
+}
+
+message GetVersionRequest {
+  int32 id = 1;
+}
+
+message GetVersionByNumberRequest {
+  int32 application_id = 1;
+  string version = 2;
+}
+
+message UpdateVersionRequest {
+  int32 id = 1;
+  optional int32 application_id = 2;
+  optional string version = 3;
+}
+
+message DeleteVersionRequest {
+  int32 id = 1;
+}
+
+message ListVersionsRequest {
+  int32 application_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message ListVersionsResponse {
+  repeated Version versions = 1;
+}
+
+// Scan Service
+service ScanService {
+  rpc CreateScan (CreateScanRequest) returns (Scan);
+  rpc GetScan (GetScanRequest) returns (Scan);
+  rpc UpdateScan (UpdateScanRequest) returns (Scan);
+  rpc DeleteScan (DeleteScanRequest) returns (google.protobuf.Empty);
+  rpc ListScans (ListScansRequest) returns (ListScansResponse);
+}
+
+message CreateScanRequest {
+  google.protobuf.Timestamp scan_date = 1;
+  int32 version_id = 2;
+}
+
+message GetScanRequest {
+  int32 id = 1;
+}
+
+message UpdateScanRequest {
+  int32 id = 1;
+  optional google.protobuf.Timestamp scan_date = 2;
+  optional int32 version_id = 3;
+}
+
+message DeleteScanRequest {
+  int32 id = 1;
+}
+
+message ListScansRequest {
+  int32 version_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message ListScansResponse {
+  repeated Scan scans = 1;
+}
+
+// ScanInfo Service
+service ScanInfoService {
+  rpc CreateScanInfo (CreateScanInfoRequest) returns (ScanInfo);
+  rpc GetScanInfo (GetScanInfoRequest) returns (ScanInfo);
+  rpc GetScanInfoByScan (GetScanInfoByScanRequest) returns (ScanInfo);
+  rpc UpdateScanInfo (UpdateScanInfoRequest) returns (ScanInfo);
+  rpc DeleteScanInfo (DeleteScanInfoRequest) returns (google.protobuf.Empty);
+}
+
+message CreateScanInfoRequest {
+  int32 scan_id = 1;
+}
+
+message GetScanInfoRequest {
+  int32 id = 1;
+}
+
+message GetScanInfoByScanRequest {
+  int32 scan_id = 1;
+}
+
+message UpdateScanInfoRequest {
+  int32 id = 1;
+  optional int32 scan_id = 2;
+}
+
+message DeleteScanInfoRequest {
+  int32 id = 1;
+}
+
+// ScanRule Service
+service ScanRuleService {
+  rpc CreateScanRule (CreateScanRuleRequest) returns (ScanRule);
+  rpc GetScanRule (GetScanRuleRequest) returns (ScanRule);
+  rpc UpdateScanRule (UpdateScanRuleRequest) returns (ScanRule);
+  rpc DeleteScanRule (DeleteScanRuleRequest) returns (google.protobuf.Empty);
+  rpc ListScanRules (ListScanRulesRequest) returns (ListScanRulesResponse);
+  rpc GetScanRuleByComposite (GetScanRuleByCompositeRequest) returns (ScanRule);
+}
+
+message ScanRule {
+  int32 id = 1;
+  int32 application_id = 2;
+  int32 team_id = 3;
+  int32 organization_id = 4;
+  optional bool sca_scan_enabled = 5;
+  optional bool sast_scan_enabled = 6;
+  optional bool allow_incremental_scans = 7;
+  optional bool allow_sast_empty_code = 8;
+  repeated string exclude_dir_regexp_queue = 9;
+  optional bool forced_do_own_sbom = 10;
+  optional bool active_blocking_sca = 11;
+}
+
+message CreateScanRuleRequest {
+  int32 application_id = 1;
+  int32 team_id = 2;
+  int32 organization_id = 3;
+  optional bool sca_scan_enabled = 4;
+  optional bool sast_scan_enabled = 5;
+  optional bool allow_incremental_scans = 6;
+  optional bool allow_sast_empty_code = 7;
+  repeated string exclude_dir_regexp_queue = 8;
+  optional bool forced_do_own_sbom = 9;
+  optional bool active_blocking_sca = 10;
+}
+
+message GetScanRuleRequest {
+  int32 id = 1;
+}
+
+message UpdateScanRuleRequest {
+  int32 id = 1;
+  optional int32 application_id = 2;
+  optional int32 team_id = 3;
+  optional int32 organization_id = 4;
+  optional bool sca_scan_enabled = 5;
+  optional bool sast_scan_enabled = 6;
+  optional bool allow_incremental_scans = 7;
+  optional bool allow_sast_empty_code = 8;
+  repeated string exclude_dir_regexp_queue = 9;
+  optional bool forced_do_own_sbom = 10;
+  optional bool active_blocking_sca = 11;
+}
+
+message DeleteScanRuleRequest {
+  int32 id = 1;
+}
+
+message ListScanRulesRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message GetScanRuleByCompositeRequest {
+  int32 application_id = 1;
+  int32 team_id = 2;
+  int32 organization_id = 3;
+}
+
+message ListScanRulesResponse {
+  repeated ScanRule scan_rules = 1;
+  int32 total_count = 2;
+}
+
+// Permission Service
+service PermissionService {
+  rpc CreatePermission (CreatePermissionRequest) returns (Permission);
+  rpc GetPermission (GetPermissionRequest) returns (Permission);
+  rpc GetPermissionByName (GetPermissionByNameRequest) returns (Permission);
+  rpc UpdatePermission (UpdatePermissionRequest) returns (Permission);
+  rpc DeletePermission (DeletePermissionRequest) returns (google.protobuf.Empty);
+  rpc ListPermissions (ListPermissionsRequest) returns (ListPermissionsResponse);
+  rpc GetTeamPermissions (GetTeamPermissionsRequest) returns (GetPermissionsResponse);
+  rpc GetOrganizationPermissions (GetOrganizationPermissionsRequest) returns (GetPermissionsResponse);
+}
+message GetTeamPermissionsRequest {
+  int32 user_id = 1;
+  int32 team_id = 2;
+}
+
+message GetOrganizationPermissionsRequest {
+  int32 user_id = 1;
+  int32 org_id = 2;
+}
+
+message GetPermissionsResponse {
+  repeated PermissionReadWrite permissions = 1;
+}
+
+message PermissionReadWrite {
+  bool read = 1;
+  bool write = 2;
+}
+message CreatePermissionRequest {
+  string name = 1;
+  optional string description = 2;
+  bool read = 3;
+  bool write = 4;
+  oneof scope {
+    int32 organization_id = 5;
+    int32 team_id = 6;
+  }
+}
+
+message GetPermissionRequest {
+  int32 id = 1;
+}
+
+message GetPermissionByNameRequest {
+  string name = 1;
+}
+
+message UpdatePermissionRequest {
+  int32 id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional bool read = 4;
+  optional bool write = 5;
+  oneof scope {
+    int32 organization_id = 6;
+    int32 team_id = 7;
+  }
+}
+
+message DeletePermissionRequest {
+  int32 id = 1;
+}
+
+message ListPermissionsRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message ListPermissionsResponse {
+  repeated Permission permissions = 1;
+}
+
+// Role Service
+service RoleService {
+  rpc CreateRole (CreateRoleRequest) returns (RoleWithPermissions);
+  rpc GetRole (GetRoleRequest) returns (RoleWithPermissions);
+  rpc GetRoleByName (GetRoleByNameRequest) returns (Role);
+  rpc UpdateRole (UpdateRoleRequest) returns (Role);
+  rpc DeleteRole (DeleteRoleRequest) returns (google.protobuf.Empty);
+  rpc ListRoles (ListRolesRequest) returns (ListRolesResponse);
+  rpc ListRolesByScope (ListRolesByScopeRequest) returns (ListRolesWithPermissionsResponse);
+  rpc AddPermission (AddPermissionRequest) returns (RoleWithPermissions);
+  rpc RemovePermission (RemovePermissionRequest) returns (RoleWithPermissions);
+  rpc AssignRoleToUser (AssignRoleRequest) returns (google.protobuf.Empty);
+  rpc RemoveRoleFromUser (RemoveRoleRequest) returns (google.protobuf.Empty);
+  rpc GetUserRoles (GetUserRolesRequest) returns (ListRolesResponse);
+}
+
+message CreateRoleRequest {
+  string name = 1;
+  optional string description = 2;
+  optional bool is_active = 3;
+  int32 owner_id = 4;
+}
+
+message GetRoleRequest {
+  int32 id = 1;
+}
+
+message GetRoleByNameRequest {
+  string name = 1;
+}
+
+message UpdateRoleRequest {
+  int32 id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional bool is_active = 4;
+}
+
+message DeleteRoleRequest {
+  int32 id = 1;
+}
+
+message ListRolesRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message ListRolesByScopeRequest {
+  oneof scope {
+    int32 organization_id = 1;
+    int32 team_id = 2;
+  }
+}
+
+message AddPermissionRequest {
+  int32 role_id = 1;
+  int32 permission_id = 2;
+}
+
+message RemovePermissionRequest {
+  int32 role_id = 1;
+  repeated int32 permission_ids = 2;
+}
+
+message AssignRoleRequest {
+  int32 user_id = 1;
+  int32 role_id = 2;
+}
+
+message RemoveRoleRequest {
+  int32 user_id = 1;
+  int32 role_id = 2;
+}
+
+message GetUserRolesRequest {
+  int32 user_id = 1;
+}
+
+message ListRolesResponse {
+  repeated Role roles = 1;
+}
+
+message ListRolesWithPermissionsResponse {
+  repeated RoleWithPermissions roles = 1;
+}

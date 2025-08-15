@@ -23,3 +23,7 @@ redis:
   max_retries: 10
   dial_timeout: "10s"
   timeout: "5s"
+
+data_processor:
+  address: "127.0.0.1"
+  port: "50052"
