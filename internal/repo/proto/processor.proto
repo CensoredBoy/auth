@@ -11,6 +11,7 @@ import "google/protobuf/empty.proto";
 message User {
   int32 id = 1;
   string name = 2;
+  string password = 3;
 }
 
 message Organization {
@@ -399,29 +400,35 @@ service ScanRuleService {
 
 message ScanRule {
   int32 id = 1;
-  int32 application_id = 2;
-  int32 team_id = 3;
+  optional int32 application_id = 2;
+  optional int32 team_id = 3;
   int32 organization_id = 4;
   optional bool sca_scan_enabled = 5;
   optional bool sast_scan_enabled = 6;
-  optional bool allow_incremental_scans = 7;
-  optional bool allow_sast_empty_code = 8;
-  repeated string exclude_dir_regexp_queue = 9;
-  optional bool forced_do_own_sbom = 10;
-  optional bool active_blocking_sca = 11;
+  optional string application_postfix = 7;
+  optional bool allow_unsafe_ext_distribs = 8;
+  optional bool ignore_repository_membership = 9;
+  optional bool allow_incremental_scans = 10;
+  optional bool allow_sast_empty_code = 11;
+  repeated string exclude_dir_regexp_queue = 12;
+  optional bool forced_do_own_sbom = 13;
+  optional bool active_blocking_sca = 14;
 }
 
 message CreateScanRuleRequest {
-  int32 application_id = 1;
-  int32 team_id = 2;
+  optional int32 application_id = 1;
+  optional int32 team_id = 2;
   int32 organization_id = 3;
   optional bool sca_scan_enabled = 4;
   optional bool sast_scan_enabled = 5;
-  optional bool allow_incremental_scans = 6;
-  optional bool allow_sast_empty_code = 7;
-  repeated string exclude_dir_regexp_queue = 8;
-  optional bool forced_do_own_sbom = 9;
-  optional bool active_blocking_sca = 10;
+  optional string application_postfix = 6;
+  optional bool allow_unsafe_ext_distribs = 7;
+  optional bool ignore_repository_membership = 8;
+  optional bool allow_incremental_scans = 9;
+  optional bool allow_sast_empty_code = 10;
+  repeated string exclude_dir_regexp_queue = 11;
+  optional bool forced_do_own_sbom = 12;
+  optional bool active_blocking_sca = 13;
 }
 
 message GetScanRuleRequest {
@@ -435,11 +442,14 @@ message UpdateScanRuleRequest {
   optional int32 organization_id = 4;
   optional bool sca_scan_enabled = 5;
   optional bool sast_scan_enabled = 6;
-  optional bool allow_incremental_scans = 7;
-  optional bool allow_sast_empty_code = 8;
-  repeated string exclude_dir_regexp_queue = 9;
-  optional bool forced_do_own_sbom = 10;
-  optional bool active_blocking_sca = 11;
+  optional string application_postfix = 7;
+  optional bool allow_unsafe_ext_distribs = 8;
+  optional bool ignore_repository_membership = 9;
+  optional bool allow_incremental_scans = 10;
+  optional bool allow_sast_empty_code = 11;
+  repeated string exclude_dir_regexp_queue = 12;
+  optional bool forced_do_own_sbom = 13;
+  optional bool active_blocking_sca = 14;
 }
 
 message DeleteScanRuleRequest {

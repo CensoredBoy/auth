@@ -26,4 +26,4 @@ redis:
 
 data_processor:
   address: "127.0.0.1"
-  port: "50052"
+  port: "50051"

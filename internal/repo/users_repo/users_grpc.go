@@ -24,7 +24,7 @@ func (r *grpcUserRepository) Get(user *common.User) (string, bool) {
 	if err != nil {
 		return "", false
 	}
-	return resp.Name, true
+	return resp.Password, true
 }
 
 func (r *grpcUserRepository) GetID(user *common.User) common.UserID {

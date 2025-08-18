@@ -43,7 +43,7 @@ type Config struct {
 	DataProcessor struct {
 		Address string `mapstructure:"address"`
 		Port    string `mapstructure:"port"`
-	}
+	} `mapstructure:"data_processor"`
 }
 
 func Load() *Config {
