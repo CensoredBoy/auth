@@ -10,6 +10,8 @@ import (
 	pb "auth/internal/web"
 	l "auth/pkg/log"
 	interceptors "auth/pkg/server"
+	"context"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	"google.golang.org/grpc"
 	"log"
@@ -18,7 +20,6 @@ import (
 
 func main() {
 	cefLogger := l.NewCEFLogger("auth-service")
-
 	cfg := config.Load()
 	r := redis.NewClient(&redis.Options{
 		Addr:         cfg.Redis.Addr,
@@ -32,29 +33,45 @@ func main() {
 	})
 	h := hasher.NewBCryptHasher(1)
 	conn, err := grpc.Dial(cfg.DataProcessor.Address+":"+cfg.DataProcessor.Port, grpc.WithInsecure())
+	fmt.Println(cfg.DataProcessor.Address)
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
 
 	// Создаем репозитории
-	usersRepo := users_repo.NewGrpcUserRepository(conn)
-	permRepo := permission_repo.NewGrpcPermissionRepository(conn)
-	tokenRepo := tokens_repo.NewTokensRedisRepo(r)
-	jwtService := jwt_service.NewJWTAuthService([]byte(cfg.JWT.AccessSecret), []byte(cfg.JWT.RefreshSecret), tokenRepo, usersRepo, h)
+	usersRepo := users_repo.NewGrpcUserRepository(conn, cefLogger)
+	permRepo := permission_repo.NewGrpcPermissionRepository(conn, cefLogger)
+	tokenRepo := tokens_repo.NewTokensRedisRepo(r, cefLogger)
+	jwtService := jwt_service.NewJWTAuthService([]byte(cfg.JWT.AccessSecret), []byte(cfg.JWT.RefreshSecret), tokenRepo, usersRepo, h, cefLogger)
 	lis, err := net.Listen("tcp", ":"+cfg.Server.GRPCPort)
 	if err != nil {
 		log.Fatalf("Crashed: %v", err)
 	}
-	authService := pb.NewAuthServer(usersRepo, permRepo, jwtService, h)
+	authService := pb.NewAuthServer(usersRepo, permRepo, jwtService, h, cefLogger)
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(interceptors.CEFLoggingInterceptor(cefLogger)),
 	)
 	pb.RegisterAuthServiceServer(grpcServer, authService)
-
-	log.Println("Server started at :" + cfg.Server.GRPCPort)
+	cefLogger.Log(
+		context.Background(),
+		"main",
+		l.LevelInfo,
+		"start",
+		map[string]string{
+			"message": "Server started at :" + cfg.Server.GRPCPort,
+		},
+	)
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Server crashed: %v", err)
+		cefLogger.Log(
+			context.Background(),
+			"main",
+			l.LevelError,
+			"stop",
+			map[string]string{
+				"message": fmt.Sprintf("Server crashed: %v", err),
+			},
+		)
 	}
 
 }

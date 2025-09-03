@@ -81,7 +81,7 @@ func (l *CEFLogger) Log(ctx context.Context, subsystem string, level int, action
 
 	// Формируем CEF-запись
 	cef := fmt.Sprintf(
-		"CEF:0|YourCompany|%s|1.0|%s|%s|%d|%s",
+		"CEF:0|GPB|%s|1.0|%s|%s|%d|%s",
 		l.appName,
 		subsystem,
 		action,

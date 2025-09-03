@@ -7,6 +7,7 @@ import (
 	"auth/internal/common"
 	"auth/internal/repo/permission_repo"
 	"auth/internal/repo/users_repo"
+	logger "auth/pkg/log"
 	"context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -21,6 +22,7 @@ type AuthServer struct {
 	authService         jwt_service.ITokenService
 	keycloakAuthService jwt_service.ITokenService
 	h                   hasher.IHasher
+	logger              logger.Logger
 }
 
 func NewAuthServer(
@@ -28,12 +30,15 @@ func NewAuthServer(
 	permissionRepo permission_repo.IPermissionRepository,
 	jwtService jwt_service.ITokenService,
 	h hasher.IHasher,
+	l logger.Logger,
+
 ) *AuthServer {
 	return &AuthServer{
 		userRepo:       userRepo,
 		permissionRepo: permissionRepo,
 		authService:    jwtService,
 		h:              h,
+		logger:         l,
 	}
 }
 
@@ -45,6 +50,13 @@ func (s *AuthServer) Login(ctx context.Context, req *LoginRequest) (*LoginRespon
 	}
 	token, err := bl.LoginHandler(user_dto, s.authService)
 	if err != nil {
+		s.logger.Log(
+			ctx,
+			"handlers",
+			logger.LevelError,
+			"Login",
+			map[string]string{"error": err.Error()},
+		)
 		return nil, status.Errorf(codes.Unauthenticated, "failed to generate jwt_service: %v", err)
 	}
 	return &LoginResponse{
@@ -64,6 +76,13 @@ func (s *AuthServer) CheckPermission(ctx context.Context, req *PermissionRequest
 	}
 	permission, err := bl.CheckPermissionHandler(ctx, req_dto, common.Token(token), s.permissionRepo, s.authService)
 	if err != nil {
+		s.logger.Log(
+			ctx,
+			"handlers",
+			logger.LevelError,
+			"CheckPermission",
+			map[string]string{"error": err.Error()},
+		)
 		return nil, status.Errorf(codes.Unauthenticated, "failed to get permossions: %v", err)
 	}
 	response := &PermissionResponse{
@@ -78,6 +97,13 @@ func (s *AuthServer) Refresh(ctx context.Context, req *RefreshRequest) (*LoginRe
 	refreshToken := req.RefreshToken
 	tokens, err := bl.RefreshTokenHandler(common.Token(refreshToken), s.authService)
 	if err != nil {
+		s.logger.Log(
+			ctx,
+			"handlers",
+			logger.LevelError,
+			"Refresh",
+			map[string]string{"error": err.Error()},
+		)
 		return nil, status.Errorf(codes.Unauthenticated, "failed to refresh tokens: %v", err)
 	}
 
@@ -97,11 +123,25 @@ func (s *AuthServer) LoginKeycloak(ctx context.Context, req *LoginRequest) (*Log
 	if _, ok := s.userRepo.Get(user_dto); !ok {
 		err := s.userRepo.CreateUser(user_dto)
 		if err != nil {
+			s.logger.Log(
+				ctx,
+				"handlers",
+				logger.LevelError,
+				"LoginKeycloak",
+				map[string]string{"error": err.Error()},
+			)
 			return nil, err
 		}
 	}
 	token, err := bl.LoginHandler(user_dto, s.keycloakAuthService)
 	if err != nil {
+		s.logger.Log(
+			ctx,
+			"handlers",
+			logger.LevelError,
+			"LoginKeycloak",
+			map[string]string{"error": err.Error()},
+		)
 		return nil, status.Errorf(codes.Unauthenticated, "failed to generate jwt_service: %v", err)
 	}
 	return &LoginResponse{
@@ -121,6 +161,13 @@ func (s *AuthServer) CheckPermissionKeycloak(ctx context.Context, req *Permissio
 	}
 	permission, err := bl.CheckPermissionHandler(ctx, req_dto, common.Token(token), s.permissionRepo, s.keycloakAuthService)
 	if err != nil {
+		s.logger.Log(
+			ctx,
+			"handlers",
+			logger.LevelError,
+			"CheckPermissionKeycloak",
+			map[string]string{"error": err.Error()},
+		)
 		return nil, status.Errorf(codes.Unauthenticated, "failed to get permossions: %v", err)
 	}
 	response := &PermissionResponse{
@@ -135,6 +182,13 @@ func (s *AuthServer) RefreshKeycloak(ctx context.Context, req *RefreshRequest) (
 	refreshToken := req.RefreshToken
 	tokens, err := bl.RefreshTokenHandler(common.Token(refreshToken), s.keycloakAuthService)
 	if err != nil {
+		s.logger.Log(
+			ctx,
+			"handlers",
+			logger.LevelError,
+			"RefreshKeycloak",
+			map[string]string{"error": err.Error()},
+		)
 		return nil, status.Errorf(codes.Unauthenticated, "failed to refresh tokens: %v", err)
 	}
 
@@ -153,6 +207,13 @@ func (s *AuthServer) Logout(ctx context.Context, req *LoginResponse) (*LogoutRes
 	}
 	err := s.authService.RevokeTokens(token_dto)
 	if err != nil {
+		s.logger.Log(
+			ctx,
+			"handlers",
+			logger.LevelError,
+			"Logout",
+			map[string]string{"error": err.Error()},
+		)
 		return nil, err
 	}
 	return &LogoutResponse{
